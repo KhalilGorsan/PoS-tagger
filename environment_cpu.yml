@@ -1,0 +1,9 @@
+name: pos-tagger
+channels:
+  - default
+dependencies:
+  - python=3.8.3
+  - pip
+  - cairo
+  - pip:
+      - -r ./requirements.txt
