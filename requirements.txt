@@ -2,3 +2,4 @@ black==19.3b0
 flake8==4.0.1
 pre-commit==2.15.0
 conllu==4.4.1
+sklearn-crfsuite==0.3.6
