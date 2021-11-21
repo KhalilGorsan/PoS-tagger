@@ -4,8 +4,7 @@ Part-Of-Speech tagger
 Install
 -----------------------------------------------------------------------------
 We use:
-- [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)
-  to setup our environment,
+- [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to setup our environment,
 - and python 3.8.3
 
 To setup the environment:
