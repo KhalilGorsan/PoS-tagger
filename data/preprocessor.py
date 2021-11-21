@@ -16,7 +16,7 @@ features: Dict[str, Callable] = {
     "is_capitalized": lambda text, index: text[index][0].upper() == text[index][0],
     "is_all_caps": lambda text, index: text[index].upper() == text[index],
     "is_all_lower": lambda text, index: text[index].lower() == text[index],
-    "is_alphanumeric": lambda text, index: is_alphanumeric([text[index]]),
+    "is_alphanumeric": lambda text, index: is_alphanumeric(text[index]),
     "prefix-1": lambda text, index: text[index][0],
     "prefix-2": lambda text, index: text[index][:2],
     "prefix-3": lambda text, index: text[index][:3],
@@ -53,8 +53,8 @@ def ud_corpus_as_list_of_tokens(data_file: TextIO) -> List[Dict]:
     return corpus_as_list_of_tokens
 
 
-def extract_features_from_text(text: str, index: int) -> Dict:
-    return {k: v(text, index) for k, v in features.items}
+def extract_features_from_text(text: List[str], index: int) -> Dict:
+    return {k: v(text, index) for k, v in features.items()}
 
 
 def make_it_dataset(list_of_tokens: List[Dict]) -> Union[List, List]:
@@ -72,7 +72,12 @@ def make_it_dataset(list_of_tokens: List[Dict]) -> Union[List, List]:
     """
     features, labels = [], []
     for tokens in list_of_tokens:
-        features.append(list(tokens.keys()))
+        text_as_list = list(tokens.keys())
+        features_per_sentence = [
+            extract_features_from_text(text_as_list, i)
+            for i in range(len(text_as_list))
+        ]
+        features.append(features_per_sentence)
         labels.append(list(tokens.values()))
 
     return features, labels
