@@ -24,13 +24,19 @@ def main():
         list_of_sentences = f.readlines()
 
     for sentence in list_of_sentences:
+        # get rid of /n that marks line break
+        split_sentence = sentence[:-1].split()
         input_as_feat = [
-            extract_features_from_text(sentence, i) for i in range(len(sentence))
+            extract_features_from_text(split_sentence, i)
+            for i in range(len(split_sentence))
         ]
 
         pred_tags = crf_model.predict_single(input_as_feat)
-        print(f"The associated pos tags of {sentence} are {pred_tags}")
+        print(f"Sentence: {sentence}")
+        print(f"POS tags: {pred_tags}")
+        print("-------------------------------------------------------")
 
 
 if __name__ == "__main__":
+    # python generate.py --target_data data/test_tags.txt
     main()
