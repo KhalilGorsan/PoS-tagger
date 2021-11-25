@@ -1,10 +1,11 @@
 """Training script"""
 import argparse
 import pickle
+import pickle as pkl
 from pathlib import Path
 
 from sklearn_crfsuite import CRF, metrics
-from tensorflow.keras.layers import LSTM, Dense, Embedding, TimeDistributed
+from tensorflow.keras.layers import LSTM, Dense, Embedding, InputLayer, TimeDistributed
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
@@ -31,7 +32,7 @@ parser.add_argument(
     type=str,
     choices=["crf", "lstm"],
     help="The model used to solve Pos tag task",
-    default="lstm",
+    default="crf",
 )
 
 
@@ -73,6 +74,7 @@ def create_lstm_model(
     vocab_size: int, max_seq_len: int, num_classes: int
 ) -> Sequential:
     """Creates an LSTM model that output a probability distribution over the POS Tags.
+
    Args:
        vocab_size: number of words in the corpus.
        max_seq_len: the max length of sequences used for padding.
@@ -81,6 +83,7 @@ def create_lstm_model(
        model: A compiled Keras model
    """
     model = Sequential()
+    model.add(InputLayer(input_shape=(max_seq_len,)))
     model.add(
         Embedding(
             input_dim=vocab_size,
@@ -98,17 +101,24 @@ def create_lstm_model(
 
 def train_lstm_model(train_data: str):
     x_encoded, y_encoded, info = create_encoded_dataset(train_data)
+
     # pad the sequences to max_seq_length
     x_train = pad_sequences(x_encoded, maxlen=info["max_seq_len"], padding="post")
     y_train = pad_sequences(y_encoded, maxlen=info["max_seq_len"], padding="post")
+
     # make tags a one-hot encode vector
     y_train = to_categorical(y_train)
     num_classes = y_train.shape[2]
+
     model = create_lstm_model(info["vocab_size"], info["max_seq_len"], num_classes)
-    model.fit(x_train, y_train, batch_size=128, epochs=1)
+    model.fit(x_train, y_train, batch_size=128, epochs=30)
+
+    # save the model to disk
     checkpoint_path = Path(MODEL_PATH / "lstm")
     checkpoint_path.mkdir(parents=True, exist_ok=True)
-    model.save_weights(checkpoint_path)
+    model.save_weights(str(checkpoint_path / "lstm_checkpoint.h5"))
+    with open(checkpoint_path / "config.pkl", "wb") as f:
+        pkl.dump(info, f)
 
 
 def main():

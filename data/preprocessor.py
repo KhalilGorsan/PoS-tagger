@@ -69,7 +69,7 @@ def make_it_dataset(list_of_tokens: List[Dict]) -> Union[List, List]:
 
     Returns:
         features: the calculated features of all the words in the corpus.
-        lables: the associated Pos tag for each word.
+        labels: the associated Pos tag for each word.
     """
     features, labels = [], []
     for tokens in list_of_tokens:

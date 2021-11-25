@@ -34,7 +34,7 @@ def main():
         pred_tags = crf_model.predict_single(input_as_feat)
         print(f"Sentence: {sentence}")
         print(f"POS tags: {pred_tags}")
-        print("-------------------------------------------------------")
+        print("-" * 100)
 
 
 if __name__ == "__main__":
