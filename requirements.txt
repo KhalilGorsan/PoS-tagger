@@ -4,3 +4,5 @@ pre-commit==2.15.0
 conllu==4.4.1
 sklearn-crfsuite==0.3.6
 scikit-learn==1.0.1
+tensorflow==2.2.0
+numpy==1.18.5
