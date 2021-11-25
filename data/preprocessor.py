@@ -2,6 +2,7 @@ import re
 from typing import Callable, Dict, List, TextIO, Union
 
 from conllu import parse_incr
+from keras_preprocessing.text import Tokenizer
 
 
 def is_alphanumeric(s: str) -> int:
@@ -81,3 +82,11 @@ def make_it_dataset(list_of_tokens: List[Dict]) -> Union[List, List]:
         labels.append(list(tokens.values()))
 
     return features, labels
+
+
+def encode_data_to_int(input_data):
+    word_tokenizer = Tokenizer()
+    word_tokenizer.fit_on_texts(input_data)
+    encoded_data = word_tokenizer.texts_to_sequences(input_data)
+
+    return encoded_data
