@@ -3,15 +3,17 @@ import argparse
 import pickle
 from pathlib import Path
 
-# from keras_preprocessing.sequence import pad_sequences
 from sklearn_crfsuite import CRF, metrics
+from tensorflow.keras.layers import LSTM, Dense, Embedding, TimeDistributed
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.utils import to_categorical
 
-from data.preprocessor import make_it_dataset, ud_corpus_as_list_of_tokens
-
-# from tensorflow.keras.layers import LSTM, Dense, Embedding, TimeDistributed
-# from tensorflow.keras.models import Sequential
-# from tensorflow.keras.utils import to_categorical
-
+from data.preprocessor import (
+    create_encoded_dataset,
+    make_it_dataset,
+    ud_corpus_as_list_of_tokens,
+)
 
 TRAIN_DATA_PATH = Path("data", "english-GUM", "en_gum-ud-train.conllu.txt")
 DEV_DATA_PATH = Path("data", "english-GUM", "en_gum-ud-dev.conllu.txt")
@@ -67,55 +69,46 @@ def train_crf_model(
         pickle.dump(crf_model, f)
 
 
-# def create_lstm_model(
-#    vocab_size: int, max_seq_len: int, num_classes: int
-# ) -> Sequential:
-#    """Creates an LSTM model that output a probability distribution over the POS Tags.
-#
-#    Args:
-#        vocab_size: number of words in the corpus.
-#        max_seq_len: the max length of sequences used for padding.
-#        num_classes: number of POS tags.
-#
-#    Returns:
-#        model: A compiled Keras model
-#    """
-#    model = Sequential()
-#    model.add(
-#        Embedding(
-#            input_dim=vocab_size,
-#            output_dim=300,
-#            input_length=max_seq_len,
-#            trainable=True,
-#        )
-#    )
-#    model.add(LSTM(64, return_sequences=True))
-#    model.add(TimeDistributed(Dense(num_classes, activation="softmax")))
-#
-#    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["acc"])
-#    print(model.summary())
-#
-#    return model
-#
-#
-# def train_lstm_model(train_data: str):
-#
-#    x_encoded, y_encoded, info = create_encoded_dataset(train_data)
-#
-#    # pad the sequences to max_seq_length
-#    x_train = pad_sequences(x_encoded, maxlen=info["max_seq_len"], padding="post")
-#    y_train = pad_sequences(y_encoded, maxlen=info["max_seq_len"], padding="post")
-#
-#    # make tags a one-hot encode vector
-#    y_train = to_categorical(y_train)
-#    num_classes = y_train.shape[2]
-#
-#    model = create_lstm_model(info["vocab_size"], info["max_seq_len"], num_classes)
-#    model.fit(x_train, y_train, batch_size=128, epochs=1)
-#
-#    checkpoint_path = Path(MODEL_PATH / "lstm")
-#    checkpoint_path.mkdir(parents=True, exist_ok=True)
-#    model.save_weights(checkpoint_path)
+def create_lstm_model(
+    vocab_size: int, max_seq_len: int, num_classes: int
+) -> Sequential:
+    """Creates an LSTM model that output a probability distribution over the POS Tags.
+   Args:
+       vocab_size: number of words in the corpus.
+       max_seq_len: the max length of sequences used for padding.
+       num_classes: number of POS tags.
+   Returns:
+       model: A compiled Keras model
+   """
+    model = Sequential()
+    model.add(
+        Embedding(
+            input_dim=vocab_size,
+            output_dim=300,
+            input_length=max_seq_len,
+            trainable=True,
+        )
+    )
+    model.add(LSTM(64, return_sequences=True))
+    model.add(TimeDistributed(Dense(num_classes, activation="softmax")))
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["acc"])
+    print(model.summary())
+    return model
+
+
+def train_lstm_model(train_data: str):
+    x_encoded, y_encoded, info = create_encoded_dataset(train_data)
+    # pad the sequences to max_seq_length
+    x_train = pad_sequences(x_encoded, maxlen=info["max_seq_len"], padding="post")
+    y_train = pad_sequences(y_encoded, maxlen=info["max_seq_len"], padding="post")
+    # make tags a one-hot encode vector
+    y_train = to_categorical(y_train)
+    num_classes = y_train.shape[2]
+    model = create_lstm_model(info["vocab_size"], info["max_seq_len"], num_classes)
+    model.fit(x_train, y_train, batch_size=128, epochs=1)
+    checkpoint_path = Path(MODEL_PATH / "lstm")
+    checkpoint_path.mkdir(parents=True, exist_ok=True)
+    model.save_weights(checkpoint_path)
 
 
 def main():
@@ -124,8 +117,8 @@ def main():
 
     if args.model == "crf":
         train_crf_model(args.train_data)
-    # elif args.model == "lstm":
-    #    train_lstm_model(args.train_data)
+    elif args.model == "lstm":
+        train_lstm_model(args.train_data)
     else:
         raise ValueError(f"Model {args.model} not supported yet")
 
