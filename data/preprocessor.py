@@ -84,9 +84,34 @@ def make_it_dataset(list_of_tokens: List[Dict]) -> Union[List, List]:
     return features, labels
 
 
-def encode_data_to_int(input_data):
+def encode_data_to_int(input_data: List) -> List:
+    """Transform the text into a unique sequence of integers.
+    """
     word_tokenizer = Tokenizer()
     word_tokenizer.fit_on_texts(input_data)
     encoded_data = word_tokenizer.texts_to_sequences(input_data)
 
     return encoded_data
+
+
+def create_encoded_dataset(train_data: str):
+    """Creates a dataset that can be fed to deep learning models, in particular RNNs by
+    transforming the input text into a unique indexed scalar data.
+    """
+    x_train, y_train, words = [], [], set()
+    train_data = open(train_data)
+    list_of_tokens = ud_corpus_as_list_of_tokens(train_data)
+
+    for sentence in list_of_tokens:
+        x_train.append(list(sentence.keys()))
+        words.update(set([w.lower() for w in sentence]))
+        y_train.append(list(sentence.values()))
+
+    vocab_size = len(words) + 1
+    max_seq_len = max([len(s) for s in x_train])
+    info = {"vocab_size": vocab_size, "max_seq_len": max_seq_len}
+
+    x_encoded = encode_data_to_int(x_train)
+    y_encoded = encode_data_to_int(y_train)
+
+    return x_encoded, y_encoded, info
