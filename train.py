@@ -38,6 +38,7 @@ parser.add_argument(
 
 def train_crf_model(
     train_data: str,
+    dev_data: str,
     algo: str = "lbfgs",
     c1: int = 0.01,
     c2: int = 0.1,
@@ -45,9 +46,11 @@ def train_crf_model(
 ):
 
     # Read the train input data and make a dataset
-    train_data = open(train_data)
+    train_data, dev_data = open(train_data), open(dev_data)
     list_of_tokens = ud_corpus_as_list_of_tokens(train_data)
+    dev_list_of_tokens = ud_corpus_as_list_of_tokens(dev_data)
     x_train, y_train = make_it_dataset(list_of_tokens)
+    x_dev, y_dev = make_it_dataset(dev_list_of_tokens)
 
     # define the model
     crf_model = CRF(
@@ -55,7 +58,7 @@ def train_crf_model(
     )
 
     print("Start training for the Pos tagging task on the UD-GUM corpus")
-    crf_model.fit(x_train, y_train)
+    crf_model.fit(x_train, y_train, X_dev=x_dev, y_dev=y_dev)
     print("Finished training on the UD-GUM corpus")
 
     print("This is the F1 score computed on the train data")
@@ -99,19 +102,25 @@ def create_lstm_model(
     return model
 
 
-def train_lstm_model(train_data: str):
+def train_lstm_model(train_data: str, dev_data: str):
     x_encoded, y_encoded, info = create_encoded_dataset(train_data)
+    x_dev_encoded, y_dev_encoded, _ = create_encoded_dataset(dev_data)
 
     # pad the sequences to max_seq_length
     x_train = pad_sequences(x_encoded, maxlen=info["max_seq_len"], padding="post")
     y_train = pad_sequences(y_encoded, maxlen=info["max_seq_len"], padding="post")
+    x_dev = pad_sequences(x_dev_encoded, maxlen=info["max_seq_len"], padding="post")
+    y_dev = pad_sequences(y_dev_encoded, maxlen=info["max_seq_len"], padding="post")
 
     # make tags a one-hot encode vector
     y_train = to_categorical(y_train)
+    y_dev = to_categorical(y_dev)
     num_classes = y_train.shape[2]
 
     model = create_lstm_model(info["vocab_size"], info["max_seq_len"], num_classes)
-    model.fit(x_train, y_train, batch_size=128, epochs=30)
+    model.fit(
+        x_train, y_train, batch_size=128, epochs=30, validation_data=(x_dev, y_dev)
+    )
 
     # save the model to disk
     checkpoint_path = Path(MODEL_PATH / "lstm")
@@ -126,9 +135,9 @@ def main():
     args = parser.parse_args()
 
     if args.model == "crf":
-        train_crf_model(args.train_data)
+        train_crf_model(args.train_data, args.dev_data)
     elif args.model == "lstm":
-        train_lstm_model(args.train_data)
+        train_lstm_model(args.train_data, args.dev_data)
     else:
         raise ValueError(f"Model {args.model} not supported yet")
 
