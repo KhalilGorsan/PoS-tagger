@@ -17,7 +17,7 @@ def main():
 
     args = parser.parse_args()
 
-    with open(MODEL_PATH, "rb") as f:
+    with open(MODEL_PATH / "crf_model.sav", "rb") as f:
         crf_model = pickle.load(f)
 
     with open(args.target_data, "r") as f:
